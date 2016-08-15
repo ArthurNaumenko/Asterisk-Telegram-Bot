@@ -2,7 +2,6 @@ module.exports = {
 
     'token': process.env.TOKEN,
     'chatid': process.env.CHATID,
-    'testchatid': process.env.TESTCHATID,
 
     'agi_port': process.env.AGI_PORT,
     'agi_host': process.env.AGI_HOST,
