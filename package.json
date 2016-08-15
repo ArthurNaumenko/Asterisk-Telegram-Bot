@@ -1,0 +1,30 @@
+{
+  "name": "askozia_bot",
+  "version": "1.0.0",
+  "description": "Telegram bot for AMI Asterisk interaction",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ArthurMcCay/Askozia-Bot.git"
+  },
+  "keywords": [
+    "telegram",
+    "bot",
+    "askozia",
+    "asterisk",
+    "node.js"
+  ],
+  "author": "Arthur McCay",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ArthurMcCay/Askozia-Bot/issues"
+  },
+  "homepage": "https://github.com/ArthurMcCay/Askozia-Bot#readme",
+  "dependencies": {
+    "asterisk-manager": "0.1.x",
+    "express": "^4.14.0"
+  }
+}
