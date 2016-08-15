@@ -39,7 +39,7 @@ app.get('/missed/:phone', function(req, res) {
 	var options = {
   		reply_markup: JSON.stringify({
    			inline_keyboard: [
-  				[{text:'101',callback_data:'101'},{text:'202',callback_data:'202'},{text:'301',callback_data:'301'},{text:'302',callback_data:'302'}],
+  				[{text:'101',callback_data:'101,'+phoneNumber},{text:'202',callback_data:'202'},{text:'301',callback_data:'301'},{text:'302',callback_data:'302'}],
   				[{text:'401',callback_data:'401'},{text:'402',callback_data:'402'},{text:'501',callback_data:'501'},{text:'502',callback_data:'502'}]
 			]
   		})	
@@ -58,6 +58,9 @@ app.listen(config.app_port, function () {
 bot.on('callback_query', function (msg) {
 	// Extract internal number from JSON
 	var ext = msg.data;
+	var arr = ext.split(",");
+	console.log(arr[0] + " - " + arr[1]);
+
 	/*  After a handful of attempts to make the inline keyboard stay after changing the message text
 		inserting json object with keyboard in it appeared to be a fine workaround. */
 	var kboard = {message_id: msg.message.message_id, chat_id: msg.message.chat.id, reply_markup: JSON.stringify({
@@ -68,13 +71,11 @@ bot.on('callback_query', function (msg) {
   		})
 	};
 	// Extract number to dial from  message text
-	// TODO: change this to regex extraction
-	var number = msg.message.text.substring(21,32);
-	bot.answerCallbackQuery(msg.id, 'Звоним +' + number + '...',false);
+	bot.answerCallbackQuery(msg.id, 'Звоним +' + arr[1] + '...',false);
 	// Call Asterisk manager method that will initiate dialing
-	dial(number,ext);
+	dial(arr[1],arr[0]);
 	// Change the message text to assure the operator that ths number has been called
-	bot.editMessageText("Был совершен звонок по номеру " + number + " с добавочным " + ext, kboard);
+	bot.editMessageText("Был совершен звонок по номеру " + arr[1] + " с добавочным " + arr[0], kboard);
 });
 
 

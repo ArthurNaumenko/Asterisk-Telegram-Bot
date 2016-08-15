@@ -1,9 +1,9 @@
 module.exports = {
-
+	// Telegram stuff
     'token': process.env.TOKEN,
     'chatid': process.env.CHATID,
-
-    'agi_port': process.env.AGI_PORT,
+    // Askozia stuff
+    'agi_port': '5038',
     'agi_host': process.env.AGI_HOST,
     
     'agi_login': process.env.AGI_LOGIN,
@@ -14,5 +14,8 @@ module.exports = {
     'ami_login': process.env.AMI_LOGIN,
     'ami_pass': process.env.AMI_PASS,
 
-	'local_context': process.env.LOCAL_CONTEXT
+	'local_context': process.env.LOCAL_CONTEXT,
+
+	'keys': process.env.KEYS
 };
+
