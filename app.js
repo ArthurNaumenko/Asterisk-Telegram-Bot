@@ -29,12 +29,13 @@ ami.keepConnected();
 /*	Receive get-request containing a phone number sent by Askozia.
 	Send message to telegram chat informing the operator about missed call and
 	the number also allowing her to choose which intertal number to use to call back. */
-app.get('/missed/:phone', function(req, res) {
+app.get('/missed/:phone/:dura', function(req, res) {
 	// Extracting and formatting number to dial
-    var missedCall = req.params.phone;
+    var missedCall = req.params.phone;  
     var phoneNumber = missedCall.replace('+',"").replace('+',"");
+    var duration = req.params.dura;
 
-	var replyText = 'Позвонить по номеру +' + phoneNumber + ' используя внутренний код:';
+	var replyText = 'Missed call from +' + phoneNumber + '. Waiting time: ' + duration + ' seconds.';
 	// Build a custom inline keyboard with internal telephone extentions		
 	var options = {
   		reply_markup: JSON.stringify({
@@ -42,7 +43,8 @@ app.get('/missed/:phone', function(req, res) {
   				[{text:'101',callback_data:'101,'+phoneNumber},{text:'202',callback_data:'202'},{text:'301',callback_data:'301'},{text:'302',callback_data:'302'}],
   				[{text:'401',callback_data:'401'},{text:'402',callback_data:'402'},{text:'501',callback_data:'501'},{text:'502',callback_data:'502'}]
 			]
-  		})	
+
+  		})
 	}
 	// Send a message with inline buttons to the chat
 	bot.sendMessage(config.chatid, replyText, options);
@@ -59,11 +61,11 @@ bot.on('callback_query', function (msg) {
 	// Extract internal number from JSON
 	var ext = msg.data;
 	var arr = ext.split(",");
-	console.log(arr[0] + " - " + arr[1]);
+	var resultMessage = (msg.message.text + "\nThe operator with exten " + arr[0] + " is calling " + arr[1] + '...');
 
 	/*  After a handful of attempts to make the inline keyboard stay after changing the message text
 		inserting json object with keyboard in it appeared to be a fine workaround. */
-	var kboard = {message_id: msg.message.message_id, chat_id: msg.message.chat.id, reply_markup: JSON.stringify({
+	var idKboard = {message_id: msg.message.message_id, chat_id: msg.message.chat.id, reply_markup: JSON.stringify({
    			inline_keyboard: [
   				[{text:'101',callback_data:'101'},{text:'202',callback_data:'202'},{text:'301',callback_data:'301'},{text:'302',callback_data:'302'}],
   				[{text:'401',callback_data:'401'},{text:'402',callback_data:'402'},{text:'501',callback_data:'501'},{text:'502',callback_data:'502'}]
@@ -75,7 +77,7 @@ bot.on('callback_query', function (msg) {
 	// Call Asterisk manager method that will initiate dialing
 	dial(arr[1],arr[0]);
 	// Change the message text to assure the operator that ths number has been called
-	bot.editMessageText("Был совершен звонок по номеру " + arr[1] + " с добавочным " + arr[0], kboard);
+	bot.editMessageText(resultMessage, idKboard);
 });
 
 
