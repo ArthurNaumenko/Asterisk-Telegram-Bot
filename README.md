@@ -4,7 +4,7 @@ A Node.js telephony server app for Telegram that uses [Node.js Asterisk Manager]
 When there's a missed call Askozia sends a request to this application that is intercepted by [Express](https://github.com/expressjs/express) and it triggers the bot to
 send a message to a specified chat. For my Bot I use [Node Telegram bot Api](https://github.com/yagop/node-telegram-bot-api).
 
-Here's how it works:
+# How it all works:
 
 First we get a request from Askozia of type http://ip:port/missed/phone number/time customer waited in seconds
 The following code proccesses this request:
@@ -30,7 +30,7 @@ Once a button has been clicked the phone call is initiated first to the operator
 <img width="339" alt="2" src="https://cloud.githubusercontent.com/assets/12981076/17729380/a4963b30-646c-11e6-9940-4b546961cd77.png">
 
 Finally, when the operator picks up the phone, the call is redirected to the customer.
-Fancy emojis make the proccess more intuitive for operators :) <br>
+Fancy emojis make it more intuitive for operators :) <br>
 <img width="354" alt="4" src="https://cloud.githubusercontent.com/assets/12981076/17729397/ace90862-646c-11e6-87e6-b54a36752795.png">
 
-All of the above makes the proccess of making return calls simplier and call-center operators more productive. 
+All of the above makes the proccess of making return calls simplier more productive. 
