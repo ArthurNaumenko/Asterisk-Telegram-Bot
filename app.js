@@ -40,8 +40,8 @@ app.get('/missed/:phone/:dura', function(req, res) {
 	var options = {
   		reply_markup: JSON.stringify({
    			inline_keyboard: [
-  				[{text:'101',callback_data:'101,'+phoneNumber},{text:'202',callback_data:'202'},{text:'301',callback_data:'301'},{text:'302',callback_data:'302'}],
-  				[{text:'401',callback_data:'401'},{text:'402',callback_data:'402'},{text:'501',callback_data:'501'},{text:'502',callback_data:'502'}]
+  				[{text:'201',callback_data:'201,'+phoneNumber},{text:'202',callback_data:'202,'+phoneNumber},{text:'301',callback_data:'301,'+phoneNumber},{text:'302',callback_data:'302,'+phoneNumber}],
+  				[{text:'401',callback_data:'401,'+phoneNumber},{text:'402',callback_data:'402,'+phoneNumber},{text:'501',callback_data:'501,'+phoneNumber},{text:'502',callback_data:'502,'+phoneNumber}]
 			]
 
   		})
@@ -61,26 +61,28 @@ bot.on('callback_query', function (msg) {
 	// Extract internal number from JSON
 	var ext = msg.data;
 	var arr = ext.split(",");
+	var customerNum = arr[1];
+	var operatorNum = arr[0];
 
 	// Create different message options
 	var message = msg.message.text
-	var midMsg = message + "\n⚠️" + arr[0] + " dialing " + arr[1] + '...';
+	var midMsg = message + "\n⚠️" + operatorNum + " dialing " + customerNum + '...';
 
 	/*  After a handful of attempts to make the inline keyboard stay after changing the message text
 		inserting json object with keyboard in it appeared to be a fine workaround. */
 	var idKboard = {message_id: msg.message.message_id, chat_id: msg.message.chat.id, reply_markup: JSON.stringify({
    			inline_keyboard: [
-  				[{text:'101',callback_data:'101,'+arr[1]},{text:'202',callback_data:'202'},{text:'301',callback_data:'301'},{text:'302',callback_data:'302'}],
-  				[{text:'401',callback_data:'401'},{text:'402',callback_data:'402'},{text:'501',callback_data:'501'},{text:'502',callback_data:'502'}]
+  				[{text:'101',callback_data:'101,'+customerNum},{text:'202',callback_data:'202,'+customerNum},{text:'301',callback_data:'301,'+customerNum},{text:'302',callback_data:'302,'+customerNum}],
+  				[{text:'401',callback_data:'401,'+customerNum},{text:'402',callback_data:'402,'+customerNum},{text:'501',callback_data:'501,'+customerNum},{text:'502',callback_data:'502,'+customerNum}]
 			]
   		})
 	};
 	// Extract number to dial from  message text
-	bot.answerCallbackQuery(msg.id, 'Dialing +' + arr[1] + '...',false);
+	bot.answerCallbackQuery(msg.id, 'Dialing +' + customerNum + '...',false);
 	// Change the message text to assure the operator that ths number has been called
 	bot.editMessageText(midMsg, idKboard);
 	// Call Asterisk manager method that will initiate dialing
-	dial(arr[1],arr[0], callback, message, idKboard);
+	dial(customerNum,operatorNum, callback, message, idKboard);
 });
 
 //	******************************************* Asterisk *******************************************
