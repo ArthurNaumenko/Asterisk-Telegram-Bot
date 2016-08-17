@@ -6,8 +6,8 @@ send a message to a specified chat. For my Bot I use [Node Telegram bot Api](htt
 
 Here's how it works:
 
-First we get a request from Askozia of type http://<ip>:<port>/missed/<phone number>/<time customer waited in seconds>
-The following code proccess this request:
+First we get a request from Askozia of type http://ip:port/missed/phone number/time customer waited in seconds
+The following code proccesses this request:
 
 ```javascript
 app.get('/missed/:phone/:duration', function(req, res) {
