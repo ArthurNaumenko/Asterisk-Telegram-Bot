@@ -15,7 +15,7 @@ app.get('/missed/:phone/:duration', function(req, res) {
 });
 ```
 And that's what we get in Telegram:<br>
-<img width="376" alt="1png" src="https://cloud.githubusercontent.com/assets/12981076/17729355/8765d4e4-646c-11e6-90f9-1d9ff05abe70.png">
+<img width="500" alt="1" src="https://cloud.githubusercontent.com/assets/12981076/17741314/6b591a26-64a4-11e6-8012-33e4c18517f6.png">
 
 The inline keyboard under the message represents operators' internal phone numbers. Clicking this button does not
 result in messages sent to the char rather it works as callback querry. The bot receives it:
@@ -27,10 +27,20 @@ bot.on('callback_query', function (msg) {
 ```
 
 Once a button has been clicked the phone call is initiated first to the operator:<br>
-<img width="339" alt="2" src="https://cloud.githubusercontent.com/assets/12981076/17729380/a4963b30-646c-11e6-9940-4b546961cd77.png">
+<img width="500" alt="3" src="https://cloud.githubusercontent.com/assets/12981076/17741326/72960510-64a4-11e6-9ef8-cfe55cf409c6.png">
 
-Finally, when the operator picks up the phone, the call is redirected to the customer.
-Fancy emojis make it more intuitive for operators :) <br>
-<img width="354" alt="4" src="https://cloud.githubusercontent.com/assets/12981076/17729397/ace90862-646c-11e6-87e6-b54a36752795.png">
+When the operator picks up the phone, the call is redirected to the customer.
+Fancy emojis make it more intuitive for operators :) 
+If a customer answered the call this is what we get: <br>
+<img width="500" alt="4" src="https://cloud.githubusercontent.com/assets/12981076/17741329/75d9259a-64a4-11e6-9dd8-7812cb3bd550.png">
 
-All of the above makes the proccess of making return calls simplier more productive. 
+In case an operator couldn't hit the "answer" button, the bot notifies the others:<br>
+<img width="500" alt="2" src="https://cloud.githubusercontent.com/assets/12981076/17741321/6feae1e6-64a4-11e6-9b9a-98e24d9394c3.png">
+
+Finally, in case a cusomer could bot answer for some reason and droped the call we get this:<br>
+<img width="500" alt="5" src="https://cloud.githubusercontent.com/assets/12981076/17741344/83970c06-64a4-11e6-9989-a4620caf8a6a.png">
+
+...or if he didn't bother to pick up the phone:<br>
+<img width="500" alt="6" src="https://cloud.githubusercontent.com/assets/12981076/17741350/8697008c-64a4-11e6-8905-2dc1c8af0c87.png">
+
+All of the above makes the proccess of making return calls simplier more productive.
