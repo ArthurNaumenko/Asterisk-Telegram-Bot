@@ -110,6 +110,15 @@ function dial(num, exten, callback, message, array) {
 				callback(message + "\n🚫"+exten+" couldn't reach "+num, array);
 			}
 		});
+<<<<<<< HEAD
+=======
+}
+
+// callback function that changes message upon call result
+function callback(message, array) {
+	// Change the message text to assure the operator that ths number has been called
+	bot.editMessageText(message, array);
+>>>>>>> f348221cfb77d7898aac3c27bf2b058d422c3717
 }
 
 // callback function that changes message upon call result
