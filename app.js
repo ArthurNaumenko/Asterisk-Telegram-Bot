@@ -24,6 +24,10 @@ var ami = new require('asterisk-manager')(
 );
 ami.keepConnected();
 
+console.log("*************************************************************************************************************************");
+console.log("************************************************** APP HAS BEEN STARTED *************************************************");
+console.log("*************************************************************************************************************************");
+
 //	******************************************* Express *******************************************
 
 /*	Receive get-request containing a phone number sent by Askozia.
@@ -40,7 +44,7 @@ app.get('/missed/:phone/:dura', function(req, res) {
 	var options = {
   		reply_markup: JSON.stringify({
    			inline_keyboard: [
-  				[{text:'201',callback_data:'201,'+phoneNumber},{text:'202',callback_data:'202,'+phoneNumber},{text:'301',callback_data:'301,'+phoneNumber},{text:'302',callback_data:'302,'+phoneNumber}],
+  				[{text:'101',callback_data:'101,'+phoneNumber},{text:'202',callback_data:'202,'+phoneNumber},{text:'301',callback_data:'301,'+phoneNumber},{text:'302',callback_data:'302,'+phoneNumber}],
   				[{text:'401',callback_data:'401,'+phoneNumber},{text:'402',callback_data:'402,'+phoneNumber},{text:'501',callback_data:'501,'+phoneNumber},{text:'502',callback_data:'502,'+phoneNumber}]
 			]
 
@@ -48,10 +52,11 @@ app.get('/missed/:phone/:dura', function(req, res) {
 	}
 	// Send a message with inline buttons to the chat
 	bot.sendMessage(config.chatid, replyText, options);
+	res.send(200,{result: 'ok'});
 });
 
 app.listen(config.app_port, function () {
-  console.log('App started at ' + config.app_port + ' port!');
+  //console.log('App started at ' + config.app_port + ' port!');
 });
 
 //	******************************************* Telegram *******************************************
@@ -105,20 +110,28 @@ function dial(num, exten, callback, message, array) {
   			'priority': '1'
 		}, function(err_ami, res_ami) {
 			if (res_ami.response === "Success") {
-				callback(message + "\n✅"+exten+" reached "+num , array);
+				//ami.on('managerevent', function(evt) { console.log(evt) }); 
+				ami.on('bridge', function(evt) {
+					console.log(evt);
+					// check if we got answer & that it's not two operators calling each other
+					if (evt.bridgestate === "Link" && evt.callerid2 === num) {
+						callback(message + "\n✅ "+exten+" reached +" + num , array);
+					}
+				});
+				ami.on('hangup', function(evt) {
+					// Customer dropped the call
+					if (evt.cause === "17" && evt.connectedlinenum != "<unknown>") {
+						callback(message + "\n📴 +"+num+" dropped call from " + exten, array);	
+					}
+					// Customer didn't answer the call
+					if (evt.cause === "21" && evt.connectedlinenum != "<unknown>") {
+						callback(message + "\n🚫 +"+num+" didn't answer the call from " + exten, array);	
+					}				
+				});
 			} else {
-				callback(message + "\n🚫"+exten+" couldn't reach "+num, array);
+				callback(message + "\n❌ "+exten+" dropped the call to +" + num , array);
 			}
 		});
-<<<<<<< HEAD
-=======
-}
-
-// callback function that changes message upon call result
-function callback(message, array) {
-	// Change the message text to assure the operator that ths number has been called
-	bot.editMessageText(message, array);
->>>>>>> f348221cfb77d7898aac3c27bf2b058d422c3717
 }
 
 // callback function that changes message upon call result
