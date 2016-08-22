@@ -236,7 +236,7 @@ function createInlineKeyboard(num) {
 // Check number of lines in the message and clean if they are too many to keep the chat clean
 function trimMessage(message) {
 	var lines = message.split('\n');
-	if (lines.length >= 5) {
+	if (lines.length >= 10) {
 		lines.splice(1,2);
 		message = lines.join('\n');
 		return message;
