@@ -49,7 +49,7 @@ var currentCalls = new Map();
 
 console.log("_________________________________________________________________________________________________________________________");
 console.log("");
-console.log("                                                	APP HAS BEEN STARTED                                                ");
+console.log("                                                	APP BEEN STARTED                                                ");
 
 //	********************************************** Express **********************************************
 
@@ -88,7 +88,7 @@ app.get('/missed/:phone/:dura', function(req, res) {
 });
 
 app.listen(config.app_port, function () {
-  console.log('                                                ATS loaded from ' + config.app_port + ' port.');
+  console.log('                                                    ATS loaded from ' + config.app_port + ' port.');
   console.log("_________________________________________________________________________________________________________________________");
 });
 
@@ -107,7 +107,7 @@ bot.on('callback_query', function (msg) {
 	var midMsg = message + "\n🔒" + operatorNum + " dialing " + customerNum + '...';
 
 	/*  After a handful of attempts to make the inline keyboard stay after changing the message text
-		inserting json object with keyboard in it appeared to be a fine workaround. */
+	inserting json object with keyboard in it appeared to be a fine workaround. */
 	var idKboard = {message_id: msg.message.message_id, chat_id: msg.message.chat.id, reply_markup: JSON.stringify({
    			inline_keyboard: [
   				[
@@ -127,10 +127,10 @@ bot.on('callback_query', function (msg) {
 	};
 
 	var ids = {message_id: msg.message.message_id, chat_id: msg.message.chat.id};
-	// Notify about call start
+	// Notify about call start (floating notification)
 	bot.answerCallbackQuery(msg.id, 'Dialing +' + customerNum + '...',false);
-	// Change the message text to assure the operator that ths number has been called
-	bot.editMessageText(midMsg, idKboard);
+	// Change the message text and hide keyboard for the calling time to avoid collisons
+	bot.editMessageText(midMsg, ids);
 
 	// Call Asterisk manager method that will initiate dialing
 	dial(customerNum, operatorNum, editMessageText, message, idKboard);
@@ -164,7 +164,12 @@ function dial(num, exten, editMessageText, message, array) {
 		});
 }
 
-// Triggers when phone is picked up by customer
+/*	Asterisk events proccessing
+
+	Full list of Asterisk events is availible at:
+	https://wiki.asterisk.org/wiki/display/AST/Asterisk+11+AMI+Events
+
+Triggers when phone is picked up by customer */
 ami.on('bridge', function(evt) {
 	// Look for map data to match the call metadata
 	currentCalls.forEach(function(value, key) {
@@ -173,7 +178,7 @@ ami.on('bridge', function(evt) {
 		// Match number + exten and make sure bridge state is Link, not Unlink
 		if (evt.callerid1 === exten && evt.callerid2 === num && evt.bridgestate === 'Link') {
 			// delete keyboard to hide it during call to avoid collision
-			delete value.reply_markup;			
+			delete value.reply_markup;
 			editMessageText('success', value.message_text, num, exten, value);
 		}
 	}, currentCalls);
@@ -199,6 +204,12 @@ ami.on('hangup', function(evt) {
 
 // Callback function that changes message upon call result
 function editMessageText(cause, message, num, exten, array) {
+	// Check number of lines in the message and clean if they are too many to keep the chat clean
+	var lines = message.split('\n');
+	if (lines.length() === 5) {
+		lines.splice(1,2);
+		message = lines.join('\n');
+	}
 	// TODO: add case when phone is unavailible or turned off
 
 	// Change the message text to assure the operator that ths number has been called
