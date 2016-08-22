@@ -106,7 +106,7 @@ bot.on('callback_query', function (msg) {
 	bot.answerCallbackQuery(msg.id, 'Dialing +' + customerNum + '...',false);
 	// Change the message text and hide keyboard for the calling time to avoid collisons
 	midMsg = trimMessage(midMsg);
-	bot.editMessageText(midMsg, idKBoard);
+	bot.editMessageText(midMsg, ids);
 
 	// Call Asterisk manager method that will initiate dialing
 	dial(customerNum, operatorNum, editMessageText, message, idKBoard);
