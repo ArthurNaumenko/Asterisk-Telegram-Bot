@@ -49,7 +49,7 @@ var currentCalls = new Map();
 
 console.log("_________________________________________________________________________________________________________________________");
 console.log("");
-console.log("                                                	APP BEEN STARTED                                                ");
+console.log("                                                	 APP HAS STARTED                                                ");
 
 //	********************************************** Express **********************************************
 
@@ -63,27 +63,12 @@ app.get('/missed/:phone/:dura', function(req, res) {
     var duration = req.params.dura;
 
 	var replyText = 'Missed call from +' + phoneNumber + '. Waiting time: ' + duration + ' seconds.';
+
 	// Build a custom inline keyboard with internal telephone extentions		
-	var options = {
-  		reply_markup: JSON.stringify({
-   			inline_keyboard: [
-  				[
-  					{text:'101',callback_data:'101,'+phoneNumber},
-  					{text:'202',callback_data:'202,'+phoneNumber},
-  					{text:'301',callback_data:'301,'+phoneNumber},
-  					{text:'302',callback_data:'302,'+phoneNumber}
-  				],
-  				[
-  					{text:'401',callback_data:'401,'+phoneNumber},
-  					{text:'402',callback_data:'402,'+phoneNumber},
-  					{text:'501',callback_data:'501,'+phoneNumber},
-  					{text:'502',callback_data:'502,'+phoneNumber}
-  				]
-			]
-  		})
-	}
+	var keyboard = {reply_markup: JSON.parse(createInlineKeyboard(phoneNumber))};
+
 	// Send a message with inline buttons to the chat
-	bot.sendMessage(chatid, replyText, options);
+	bot.sendMessage(chatid, replyText, keyboard);
 	res.status("result").send("Request proccessed successfully");
 });
 
@@ -106,39 +91,30 @@ bot.on('callback_query', function (msg) {
 	var message = msg.message.text
 	var midMsg = message + "\n🔒" + operatorNum + " dialing " + customerNum + '...';
 
+	// Build a custom inline keyboard with internal telephone extentions		
+	var keyboard = createInlineKeyboard(customerNum);
+
 	/*  After a handful of attempts to make the inline keyboard stay after changing the message text
 	inserting json object with keyboard in it appeared to be a fine workaround. */
-	var idKboard = {message_id: msg.message.message_id, chat_id: msg.message.chat.id, reply_markup: JSON.stringify({
-   			inline_keyboard: [
-  				[
-  					{text:'101',callback_data:'101,'+customerNum},
-  				 	{text:'202',callback_data:'202,'+customerNum},
-  				 	{text:'301',callback_data:'301,'+customerNum},
-  				 	{text:'302',callback_data:'302,'+customerNum}
-  				],
-  				[
-  					{text:'401',callback_data:'401,'+customerNum},
-  					{text:'402',callback_data:'402,'+customerNum},
-  					{text:'501',callback_data:'501,'+customerNum},
-  					{text:'502',callback_data:'502,'+customerNum}]
-			]
-  		}),
-		message_text: msg.message.text
-	};
+	var idKBoard = {message_id: msg.message.message_id, 
+					chat_id: msg.message.chat.id, 
+					reply_markup: JSON.parse(keyboard),
+					message_text: msg.message.text};
 
 	var ids = {message_id: msg.message.message_id, chat_id: msg.message.chat.id};
 	// Notify about call start (floating notification)
 	bot.answerCallbackQuery(msg.id, 'Dialing +' + customerNum + '...',false);
 	// Change the message text and hide keyboard for the calling time to avoid collisons
-	bot.editMessageText(midMsg, ids);
+	midMsg = trimMessage(midMsg);
+	bot.editMessageText(midMsg, idKBoard);
 
 	// Call Asterisk manager method that will initiate dialing
-	dial(customerNum, operatorNum, editMessageText, message, idKboard);
+	dial(customerNum, operatorNum, editMessageText, message, idKBoard);
 
 	// Create a key for key in map for further identification of calls
 	var key = customerNum + "," + operatorNum;
 	// Store customer and operator numbers and json object with Id's and keyboard in a map
-	currentCalls.set(key, idKboard);
+	currentCalls.set(key, idKBoard);
 });
 
 /*	********************************************** Asterisk **********************************************
@@ -186,6 +162,7 @@ ami.on('bridge', function(evt) {
 
 // Triggers when call is ended or dropped
 ami.on('hangup', function(evt) {
+	console.log(evt.cause);
 	// Look for map data to match the call metadata
 	currentCalls.forEach(function(value, key) {
 		var arr = key.split(",");
@@ -204,12 +181,7 @@ ami.on('hangup', function(evt) {
 
 // Callback function that changes message upon call result
 function editMessageText(cause, message, num, exten, array) {
-	// Check number of lines in the message and clean if they are too many to keep the chat clean
-	var lines = message.split('\n');
-	if (lines.length() === 5) {
-		lines.splice(1,2);
-		message = lines.join('\n');
-	}
+	message = trimMessage(message);
 	// TODO: add case when phone is unavailible or turned off
 
 	// Change the message text to assure the operator that ths number has been called
@@ -239,4 +211,36 @@ function editMessageText(cause, message, num, exten, array) {
 			break;
 	}
 	bot.editMessageText(result, array);
+}
+
+// Create an inline keyboard with operator and customer numbers as callback data
+function createInlineKeyboard(num) {
+	  return JSON.stringify({
+        inline_keyboard: [
+          [
+            {text:'101',callback_data:'101,' + num},
+            {text:'202',callback_data:'202,' + num},
+            {text:'301',callback_data:'301,' + num},
+            {text:'302',callback_data:'302,' + num}
+          ],
+          [
+            {text:'401',callback_data:'401,' + num},
+            {text:'402',callback_data:'402,' + num},
+            {text:'501',callback_data:'501,' + num},
+            {text:'502',callback_data:'502,' + num}
+          ]
+      ]
+      })
+}
+
+// Check number of lines in the message and clean if they are too many to keep the chat clean
+function trimMessage(message) {
+	var lines = message.split('\n');
+	if (lines.length >= 5) {
+		lines.splice(1,2);
+		message = lines.join('\n');
+		return message;
+	} else {
+		return message;
+	}
 }
