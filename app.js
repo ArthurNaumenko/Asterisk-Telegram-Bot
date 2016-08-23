@@ -58,7 +58,7 @@ console.log("                                                	 APP HAS STARTED  
 	the number also allowing her to choose which intertal number to use to call back. */
 app.get('/missed/:phone/:dura', function(req, res) {
 	// Extracting and formatting number to dial
-    var missedCall = req.params.phone;  
+    var missedCall = req.params.phone;
     var phoneNumber = missedCall.replace('+',"").replace('+',"");
     var duration = req.params.dura;
 
@@ -147,43 +147,45 @@ function dial(num, exten, editMessageText, message, array) {
 
 Triggers when phone is picked up by customer */
 ami.on('bridge', function(evt) {
-	// Look for map data to match the call metadata
-	currentCalls.forEach(function(value, key) {
-		var arr = key.split(",");
-		var exten = arr[1], num = arr[0];
-		// Match number + exten and make sure bridge state is Link, not Unlink
-		if (evt.callerid1 === exten && evt.callerid2 === num && evt.bridgestate === 'Link') {
-			// delete keyboard to hide it during call to avoid collision
-			delete value.reply_markup;
-			editMessageText('success', value.message_text, num, exten, value);
-		}
-	}, currentCalls);
+	var key = evt.callerid2 + "," + evt.callerid1;
+	var jsonObject = currentCalls.get(key);
+	// Match number + exten and make sure bridge state is Link, not Unlink
+	if (currentCalls.get(key) !== undefined && evt.bridgestate === 'Link') {
+		// Delete keyboard to hide it during call to avoid collision
+		delete jsonObject.reply_markup;
+		editMessageText('success',
+						jsonObject.message_text,
+						evt.callerid2,
+						evt.callerid1, 
+						jsonObject);
+	}
 });
 
 // Triggers when call is ended or dropped
 ami.on('hangup', function(evt) {
-	console.log(evt.cause);
-	// Look for map data to match the call metadata
-	currentCalls.forEach(function(value, key) {
-		var arr = key.split(",");
-		var exten = arr[1], num = arr[0];
-		// Match number + exten
-		if (evt.connectedlinenum === exten && evt.calleridnum === num) {
-		/*  Edit message text and pass hangup cause code.
+	//console.log("Hanup cause: " + evt.cause);
+	var key = evt.calleridnum + "," + evt.connectedlinenum;
+	var jsonObject = currentCalls.get(key);
+	// Check if the unique number + exten key is present in the map 
+	if (currentCalls.get(key) !== undefined) {
+		// Append keyboard back
+		var keyboard = createInlineKeyboard(evt.calleridnum);
+		jsonObject.reply_markup = JSON.parse(keyboard);
+		/*	Edit message text and pass hangup cause code.
 			Full list of codes can be found at: 
 			https://wiki.asterisk.org/wiki/display/AST/Hangup+Cause+Mappings */
-			editMessageText(evt.cause, value.message_text, num, exten, value);
-			// Delete this pair from the map so it won't call editMessageText twice (hangup event occurs several times)
-			currentCalls.delete(key);
-		}
-	}, currentCalls);
+		editMessageText(evt.cause,
+						jsonObject.message_text, 
+						evt.calleridnum, evt.connectedlinenum, 
+						jsonObject);
+		// Delete this pair from the map so it won't call editMessageText twice (hangup event occurs several times)
+		currentCalls.delete(key);
+	}
 });
 
 // Callback function that changes message upon call result
 function editMessageText(cause, message, num, exten, array) {
 	message = trimMessage(message);
-	// TODO: add case when phone is unavailible or turned off
-
 	// Change the message text to assure the operator that ths number has been called
 	var result = "";
 	switch (cause) {
@@ -218,7 +220,7 @@ function createInlineKeyboard(num) {
 	  return JSON.stringify({
         inline_keyboard: [
           [
-            {text:'101',callback_data:'101,' + num},
+            {text:'201',callback_data:'201,' + num},
             {text:'202',callback_data:'202,' + num},
             {text:'301',callback_data:'301,' + num},
             {text:'302',callback_data:'302,' + num}
