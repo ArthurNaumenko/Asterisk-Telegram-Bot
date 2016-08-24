@@ -147,7 +147,7 @@ function dial(num, exten, editMessageText, message, array) {
   			'priority': '1'
 		}, function(err_ami, res_ami) {
 			// Operator dropped the call, edit message, show inline keyboard
-			if (res_ami.response === "Fail") { 
+			if (res_ami.response === "Fail" || res_ami.response === "Error") {
 				editMessageText('drop', message, num, exten, array);
 			}
 		});
@@ -167,10 +167,10 @@ ami.on('bridge', function(evt) {
 		// Delete keyboard to hide it during call to avoid collision
 		delete jsonObject.reply_markup;
 		editMessageText('success',
-						jsonObject.message_text,
-						evt.callerid2,
-						evt.callerid1, 
-						jsonObject);
+				jsonObject.message_text,
+				evt.callerid2,
+				evt.callerid1, 
+				jsonObject);
 	}
 });
 
@@ -182,15 +182,21 @@ ami.on('hangup', function(evt) {
 	// Check if the unique number + exten key is present in the map 
 	if (currentCalls.get(key) !== undefined) {
 		// Append keyboard back
-		var keyboard = createInlineKeyboard(true);
+		if (evt.cause === '16') {
+			var keyboard = createInlineKeyboard(true);
+		} else {
+			var keyboard = createInlineKeyboard(false);
+		}
+
 		jsonObject.reply_markup = JSON.parse(keyboard);
+		
 		/*	Edit message text and pass hangup cause code.
 			Full list of codes can be found at: 
 			https://wiki.asterisk.org/wiki/display/AST/Hangup+Cause+Mappings */
 		editMessageText(evt.cause,
-						jsonObject.message_text, 
-						evt.calleridnum, evt.connectedlinenum, 
-						jsonObject);
+				jsonObject.message_text, 
+				evt.calleridnum, evt.connectedlinenum, 
+				jsonObject);
 		// Delete this pair from the map so it won't call editMessageText twice (hangup event occurs several times)
 		currentCalls.delete(key);
 	}
@@ -206,6 +212,10 @@ function editMessageText(cause, message, num, exten, array) {
 		case 'success':
 			result = message + "\n📞 " + exten + " reached +" + num; 
 			break;
+		// Operator dropped the call before reaching customer
+		case 'drop':
+			result = message + "\n❌ " + exten + " dropped the call to +" + num;
+			break;
 		// Customer dropped the call
 		case '17':
 			result = message + "\n📴 +" + num + " dropped call from " + exten;
@@ -213,10 +223,6 @@ function editMessageText(cause, message, num, exten, array) {
 		// Customer didn't answer the call
 		case '21':
 			result = message + "\n🚫 +" + num + " didn't answer the call from " + exten;
-			break;
-		// Operator dropped the call before reaching customer
-		case 'drop':
-			result = message + "\n❌ " + exten + " dropped the call to +" + num;
 			break;
 		case '16':
 			result = message + "\n✅ " + exten + " successfully called " + num;
@@ -242,10 +248,10 @@ function createInlineKeyboard(isShow) {
 		return JSON.stringify({
         	inline_keyboard: [
 	          	[
-	            	{text:'201',callback_data:'201'},
-	            	{text:'202',callback_data:'202'},
-	            	{text:'301',callback_data:'301'},
-	            	{text:'302',callback_data:'302'}
+		            {text:'201',callback_data:'201'},
+		           	{text:'202',callback_data:'202'},
+		           	{text:'301',callback_data:'301'},
+		           	{text:'302',callback_data:'302'}
 	          	],
 	          	[
 		            {text:'401',callback_data:'401'},
