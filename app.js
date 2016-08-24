@@ -64,8 +64,8 @@ app.get('/missed/:phone/:dura', function(req, res) {
 
 	var replyText = 'Missed call from +' + phoneNumber + '. Waiting time: ' + duration + ' seconds.';
 
-	// Build a custom inline keyboard with internal telephone extentions		
-	var keyboard = {reply_markup: JSON.parse(createInlineKeyboard(phoneNumber))};
+	// Build a custom inline keyboard with internal telephone extentions
+	var keyboard = {reply_markup: JSON.parse(createInlineKeyboard(false))};
 
 	// Send a message with inline buttons to the chat
 	bot.sendMessage(chatid, replyText, keyboard);
@@ -81,40 +81,53 @@ app.listen(config.app_port, function () {
 
 	Respond to callback querry from the previous message */
 bot.on('callback_query', function (msg) {
+	//console.log(msg);
+	var messageText = msg.message.text;
+	var regexArray = messageText.match(/7\d{10}/);
+	var customerNum = regexArray[0];
 	// Extract internal number from JSON
-	var ext = msg.data;
-	var arr = ext.split(",");
-	var customerNum = arr[1];
-	var operatorNum = arr[0];
+	var operatorNum = msg.data;
+	
+	// 
+	if (msg.data === 'show') {
+		var keyboard = createInlineKeyboard(false);
+		var idKBoard = {message_id: msg.message.message_id, 
+						chat_id: msg.message.chat.id, 
+						reply_markup: JSON.parse(keyboard),
+						message_text: msg.message.text};
+		bot.editMessageText(msg.message.text + " ", idKBoard);
+	} else {
+		// Create different message options
+		var message = msg.message.text
+		var midMsg = message + "\n🔒" + operatorNum + " dialing " + customerNum + '...';	
 
-	// Create different message options
-	var message = msg.message.text
-	var midMsg = message + "\n🔒" + operatorNum + " dialing " + customerNum + '...';
+		// Build a custom inline keyboard with internal telephone extentions		
+		var keyboard = createInlineKeyboard(false);
 
-	// Build a custom inline keyboard with internal telephone extentions		
-	var keyboard = createInlineKeyboard(customerNum);
+		/*  After a handful of attempts to make the inline keyboard stay after changing the message text
+		inserting json object with keyboard in it appeared to be a fine workaround. */
+		var idKBoard = {message_id: msg.message.message_id, 
+						chat_id: msg.message.chat.id,
+						reply_markup: JSON.parse(keyboard),
+						message_text: msg.message.text};
 
-	/*  After a handful of attempts to make the inline keyboard stay after changing the message text
-	inserting json object with keyboard in it appeared to be a fine workaround. */
-	var idKBoard = {message_id: msg.message.message_id, 
-					chat_id: msg.message.chat.id, 
-					reply_markup: JSON.parse(keyboard),
-					message_text: msg.message.text};
+		var ids = {message_id: msg.message.message_id, chat_id: msg.message.chat.id};
 
-	var ids = {message_id: msg.message.message_id, chat_id: msg.message.chat.id};
-	// Notify about call start (floating notification)
-	bot.answerCallbackQuery(msg.id, 'Dialing +' + customerNum + '...',false);
-	// Change the message text and hide keyboard for the calling time to avoid collisons
-	midMsg = trimMessage(midMsg);
-	bot.editMessageText(midMsg, ids);
+		// Notify about call start (floating notification)
+		bot.answerCallbackQuery(msg.id, 'Dialing +' + customerNum + '...',false);
 
-	// Call Asterisk manager method that will initiate dialing
-	dial(customerNum, operatorNum, editMessageText, message, idKBoard);
+		// Change the message text and hide keyboard for the calling time to avoid collisons
+		midMsg = trimMessage(midMsg);
+		bot.editMessageText(midMsg, ids);
 
-	// Create a key for key in map for further identification of calls
-	var key = customerNum + "," + operatorNum;
-	// Store customer and operator numbers and json object with Id's and keyboard in a map
-	currentCalls.set(key, idKBoard);
+		// Call Asterisk manager method that will initiate dialing
+		dial(customerNum, operatorNum, editMessageText, message, idKBoard);
+
+		// Create a key for key in map for further identification of calls
+		var key = customerNum + "," + operatorNum;
+		// Store customer and operator numbers and json object with Id's and keyboard in a map
+		currentCalls.set(key, idKBoard);
+	}
 });
 
 /*	********************************************** Asterisk **********************************************
@@ -169,7 +182,7 @@ ami.on('hangup', function(evt) {
 	// Check if the unique number + exten key is present in the map 
 	if (currentCalls.get(key) !== undefined) {
 		// Append keyboard back
-		var keyboard = createInlineKeyboard(evt.calleridnum);
+		var keyboard = createInlineKeyboard(true);
 		jsonObject.reply_markup = JSON.parse(keyboard);
 		/*	Edit message text and pass hangup cause code.
 			Full list of codes can be found at: 
@@ -216,23 +229,34 @@ function editMessageText(cause, message, num, exten, array) {
 }
 
 // Create an inline keyboard with operator and customer numbers as callback data
-function createInlineKeyboard(num) {
-	  return JSON.stringify({
-        inline_keyboard: [
-          [
-            {text:'201',callback_data:'201,' + num},
-            {text:'202',callback_data:'202,' + num},
-            {text:'301',callback_data:'301,' + num},
-            {text:'302',callback_data:'302,' + num}
-          ],
-          [
-            {text:'401',callback_data:'401,' + num},
-            {text:'402',callback_data:'402,' + num},
-            {text:'501',callback_data:'501,' + num},
-            {text:'502',callback_data:'502,' + num}
-          ]
-      ]
-      })
+function createInlineKeyboard(isShow) {
+	if (isShow) {
+		return JSON.stringify({
+			inline_keyboard: [
+				[
+					{text:'🔽   SHOW KEYBOARD   🔽',callback_data:'show'}
+				]
+			]
+		})
+	} else {
+		return JSON.stringify({
+        	inline_keyboard: [
+	          	[
+	            	{text:'201',callback_data:'201'},
+	            	{text:'202',callback_data:'202'},
+	            	{text:'301',callback_data:'301'},
+	            	{text:'302',callback_data:'302'}
+	          	],
+	          	[
+		            {text:'401',callback_data:'401'},
+		            {text:'402',callback_data:'402'},
+		            {text:'501',callback_data:'501'},
+		            {text:'502',callback_data:'502'}
+	          	]
+     		 ]
+      	})
+	}
+	  
 }
 
 // Check number of lines in the message and clean if they are too many to keep the chat clean
