@@ -167,10 +167,10 @@ ami.on('bridge', function(evt) {
 		// Delete keyboard to hide it during call to avoid collision
 		delete jsonObject.reply_markup;
 		editMessageText('success',
-				jsonObject.message_text,
-				evt.callerid2,
-				evt.callerid1, 
-				jsonObject);
+			jsonObject.message_text,
+			evt.callerid2,
+			evt.callerid1, 
+			jsonObject);
 	}
 });
 
@@ -194,9 +194,9 @@ ami.on('hangup', function(evt) {
 			Full list of codes can be found at: 
 			https://wiki.asterisk.org/wiki/display/AST/Hangup+Cause+Mappings */
 		editMessageText(evt.cause,
-				jsonObject.message_text, 
-				evt.calleridnum, evt.connectedlinenum, 
-				jsonObject);
+			jsonObject.message_text, 
+			evt.calleridnum, evt.connectedlinenum, 
+			jsonObject);
 		// Delete this pair from the map so it won't call editMessageText twice (hangup event occurs several times)
 		currentCalls.delete(key);
 	}
@@ -248,10 +248,10 @@ function createInlineKeyboard(isShow) {
 		return JSON.stringify({
         	inline_keyboard: [
 	          	[
-		            {text:'201',callback_data:'201'},
-		           	{text:'202',callback_data:'202'},
-		           	{text:'301',callback_data:'301'},
-		           	{text:'302',callback_data:'302'}
+	            	{text:'201',callback_data:'201'},
+	            	{text:'202',callback_data:'202'},
+	            	{text:'301',callback_data:'301'},
+	            	{text:'302',callback_data:'302'}
 	          	],
 	          	[
 		            {text:'401',callback_data:'401'},
