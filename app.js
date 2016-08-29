@@ -262,9 +262,6 @@ function createInlineKeyboard(isShow) {
      		 ]
       	})
 	}
-	  
-<<<<<<< HEAD
-=======
 }
 
 // Check number of lines in the message and clean if they are too many to keep the chat clean
@@ -277,7 +274,6 @@ function trimMessage(message) {
 	} else {
 		return message;
 	}
->>>>>>> 05d62ddae57a56272eae666977558126005dca0e
 }
 
 // Check number of lines in the message and clean if they are too many to keep the chat clean
