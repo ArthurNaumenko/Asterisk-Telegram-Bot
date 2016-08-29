@@ -263,6 +263,21 @@ function createInlineKeyboard(isShow) {
       	})
 	}
 	  
+<<<<<<< HEAD
+=======
+}
+
+// Check number of lines in the message and clean if they are too many to keep the chat clean
+function trimMessage(message) {
+	var lines = message.split('\n');
+	if (lines.length >= 10) {
+		lines.splice(1,2);
+		message = lines.join('\n');
+		return message;
+	} else {
+		return message;
+	}
+>>>>>>> 05d62ddae57a56272eae666977558126005dca0e
 }
 
 // Check number of lines in the message and clean if they are too many to keep the chat clean

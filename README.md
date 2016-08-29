@@ -15,7 +15,7 @@ app.get('/missed/:phone/:duration', function(req, res) {
 });
 ```
 And that's what we get in Telegram:<br>
-<img width="500" alt="1" src="https://cloud.githubusercontent.com/assets/12981076/17741314/6b591a26-64a4-11e6-8012-33e4c18517f6.png">
+<img width="500" alt="1" src="https://cloud.githubusercontent.com/assets/12981076/17925886/6a52b882-69f7-11e6-99f3-f2e33c8b17bc.png">
 
 The inline keyboard under the message represents operators' internal phone numbers. Clicking this button does not
 result in messages sent to the char rather it works as callback querry. The bot receives it:
@@ -26,21 +26,23 @@ bot.on('callback_query', function (msg) {
 });
 ```
 
-Once a button has been clicked the phone call is initiated first to the operator:<br>
-<img width="500" alt="3" src="https://cloud.githubusercontent.com/assets/12981076/17741326/72960510-64a4-11e6-9ef8-cfe55cf409c6.png">
+Once a button has been clicked the phone call is initiated first to the operator.
+The inline keyboard gets hidden so other operators are not able to call the same number that's being dialed:<br>
+<img width="500" alt="snip_20160824122502" src="https://cloud.githubusercontent.com/assets/12981076/17925976/ce8e7ffc-69f7-11e6-9bcd-73a5bf698a87.png">
 
 When the operator picks up the phone, the call is redirected to the customer.
 Fancy emojis make it more intuitive for operators :) 
-If a customer answered the call this is what we get: <br>
-<img width="500" alt="4" src="https://cloud.githubusercontent.com/assets/12981076/17741329/75d9259a-64a4-11e6-9dd8-7812cb3bd550.png">
+If a customer answered the call this is what we get (keyboard still hidden): <br>
+<img width="500" alt="snip_20160824122518" src="https://cloud.githubusercontent.com/assets/12981076/17926086/456f31c0-69f8-11e6-861b-185296d9d924.png">
 
-In case an operator couldn't hit the "answer" button, the bot notifies the others:<br>
-<img width="500" alt="2" src="https://cloud.githubusercontent.com/assets/12981076/17741321/6feae1e6-64a4-11e6-9b9a-98e24d9394c3.png">
+If either the operator or the customer hangs up after successfil dialing the message is updated and the inline keyboard is minimized
+to keep the chat clean, avoid situations when operator dials clicking button by mistake. It also indicates that dialing was successful. <br>
+<img width="500" alt="snip_20160824122531" src="https://cloud.githubusercontent.com/assets/12981076/17926210/c65be454-69f8-11e6-8a54-44e9ace25785.png">
 
-Finally, in case a cusomer could bot answer for some reason and droped the call we get this:<br>
-<img width="500" alt="5" src="https://cloud.githubusercontent.com/assets/12981076/17741344/83970c06-64a4-11e6-9989-a4620caf8a6a.png">
+If for some reason the dial was unsuccessful, the message is updated saying why the operator couldn't reach the customer and the keyboard shows up not minimized:<br>
+<img width="500" alt="snip_20160824122554" src="https://cloud.githubusercontent.com/assets/12981076/17926433/c05e8b00-69f9-11e6-8e1b-3816d3b8fddd.png">
 
-...or if he didn't bother to pick up the phone:<br>
-<img width="500" alt="6" src="https://cloud.githubusercontent.com/assets/12981076/17741350/8697008c-64a4-11e6-8905-2dc1c8af0c87.png">
+Cherry on top - final view of the chat:<br>
+<img width="500" alt="asdq" src="https://cloud.githubusercontent.com/assets/12981076/17926475/ec830f80-69f9-11e6-8785-ea10ccb5fb22.png">
 
 All of the above makes the proccess of making return calls simplier more productive.
