@@ -18,11 +18,7 @@ ________________________________________________________________________________
 		associated with this call in a map;
 	5. 	Make a call and proccess events such as when contact picked up or hung up the phone, edit the message
 		respectively
-______________________________________________________________________________________________________________
-
-*/
-
-//	********************************************** Dependencies **********************************************
+______________________________________________________________________________________________________________ */
 
 var config = require('./config');
 // Express variables
@@ -43,15 +39,19 @@ var ami = new require('asterisk-manager')(
 );
 ami.keepConnected();
 
+// MongoDB
+var MongoClient = new require('mongodb').MongoClient;
+var assert = require('assert');
+
+var url = 'mongodb://' + config.db_ip + ':' + config.db_port + '/' + config.db_name;
+MongoClient.connect(url, function(err, db) {
+	assert.equal(null, err);
+	console.log("Successful connection to data base");
+	db.close();
+});
+
 var chatid = config.testchatid;
-
 var currentCalls = new Map();
-
-console.log("_________________________________________________________________________________________________________________________");
-console.log("");
-console.log("                                                	 APP HAS STARTED                                                ");
-
-//	********************************************** Express **********************************************
 
 /*	Receive get-request containing a phone number sent by Askozia.
 	Send message to telegram chat informing the operator about missed call and
@@ -62,24 +62,43 @@ app.get('/missed/:phone/:dura', function(req, res) {
     var phoneNumber = missedCall.replace('+',"").replace('+',"");
     var duration = req.params.dura;
 
-	var replyText = 'Missed call from +' + phoneNumber + '. Waiting time: ' + duration + ' seconds.';
+    var replyText = 'Missed call from: ';
 
-	// Build a custom inline keyboard with internal telephone extentions
-	var keyboard = {reply_markup: JSON.parse(createInlineKeyboard(false))};
+    // Check number in database
+	MongoClient.connect(url, function(err, db) {
+  		assert.equal(null, err); 
+  		var i = 0; 		
+  	  	findCustomerData(phoneNumber, db, function(data) {	
+			if (data != null && data != undefined) {
+				replyText = replyText + phoneNumber + ', ' +
+							data.firstName + ' ' + data.lastName + " " +
+							data.age + ' yo. ' +
+							'Last visit: ' + data.lastVisit +
+							'. Waiting time: ' + duration + ' seconds.'				
+			} else {
+				replyText = replyText + phoneNumber + '. Waiting time: ' + duration + ' seconds.';
+			}	
+			
+			db.close();
 
-	// Send a message with inline buttons to the chat
-	bot.sendMessage(chatid, replyText, keyboard);
-	res.status("result").send("Request proccessed successfully");
+			// Build a custom inline keyboard with internal telephone extentions
+			var keyboard = {reply_markup: JSON.parse(createInlineKeyboard(false))};
+
+			// Send a message with inline buttons to the chat
+			if (i === 0) {
+				bot.sendMessage(chatid, replyText, keyboard);			
+			}
+			i++;
+  		});
+	});
+	res.status("result").send("Request proccessed successfully");		  							       		
 });
 
 app.listen(config.app_port, function () {
-  console.log('                                                    ATS loaded from ' + config.app_port + ' port.');
-  console.log("_________________________________________________________________________________________________________________________");
+  console.log('ATS loaded from ' + config.app_port + ' port.');
 });
 
-/*	********************************************** Telegram **********************************************
-
-	Respond to callback querry from the previous message */
+//	Respond to callback querry from the previous message
 bot.on('callback_query', function (msg) {
 	//console.log(msg);
 	var messageText = msg.message.text;
@@ -130,9 +149,7 @@ bot.on('callback_query', function (msg) {
 	}
 });
 
-/*	********************************************** Asterisk **********************************************
-
-	Initiating a phone call. It first calls the operator and once she accepted the call it dials the customer.
+/*	Initiating a phone call. It first calls the operator and once she accepted the call it dials the customer.
 
 	Full list of Asterisk actions may be found at:
 	https://wiki.asterisk.org/wiki/display/AST/Asterisk+11+AMI+Actions */
@@ -269,21 +286,21 @@ function trimMessage(message) {
 	var lines = message.split('\n');
 	if (lines.length >= 10) {
 		lines.splice(1,2);
-		message = lines.join('\n');
-		return message;
+		return lines.join('\n');
 	} else {
 		return message;
 	}
 }
 
-// Check number of lines in the message and clean if they are too many to keep the chat clean
-function trimMessage(message) {
-	var lines = message.split('\n');
-	if (lines.length >= 10) {
-		lines.splice(1,2);
-		message = lines.join('\n');
-		return message;
-	} else {
-		return message;
-	}
-}
+function findCustomerData(phoneNumber, db, callback) {
+	var cursor = db.collection('customers').find({'number' : phoneNumber});
+	cursor.each(function(err, doc) {
+		assert.equal(err, null);
+		if (doc != null) {
+			data = doc;
+			callback(data);
+		} else {
+			callback();
+		}
+	});	
+};
