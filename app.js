@@ -67,28 +67,24 @@ app.get('/missed/:phone/:dura', function(req, res) {
     // Check number in database
 	MongoClient.connect(url, function(err, db) {
   		assert.equal(null, err); 
-  		var i = 0; 		
-  	  	findCustomerData(phoneNumber, db, function(data) {	
-			if (data != null && data != undefined) {
-				replyText = replyText + phoneNumber + ', ' +
-							data.firstName + ' ' + data.lastName + " " +
-							data.age + ' yo. ' +
-							'Last visit: ' + data.lastVisit +
+  	  	findCustomerData(phoneNumber, db, function(doc) {	
+		    if (doc != null && doc != undefined) {
+			    replyText = replyText + phoneNumber + ', ' +
+							doc.firstName + ' ' + doc.lastName + " " +
+							doc.age + ' yo. ' +
+							'Last visit: ' + doc.lastVisit +
 							'. Waiting time: ' + duration + ' seconds.'				
 			} else {
 				replyText = replyText + phoneNumber + '. Waiting time: ' + duration + ' seconds.';
-			}	
-			
+			}
+
 			db.close();
 
 			// Build a custom inline keyboard with internal telephone extentions
 			var keyboard = {reply_markup: JSON.parse(createInlineKeyboard(false))};
 
 			// Send a message with inline buttons to the chat
-			if (i === 0) {
-				bot.sendMessage(chatid, replyText, keyboard);			
-			}
-			i++;
+			bot.sendMessage(chatid, replyText, keyboard);			
   		});
 	});
 	res.status("result").send("Request proccessed successfully");		  							       		
@@ -184,10 +180,10 @@ ami.on('bridge', function(evt) {
 		// Delete keyboard to hide it during call to avoid collision
 		delete jsonObject.reply_markup;
 		editMessageText('success',
-			jsonObject.message_text,
-			evt.callerid2,
-			evt.callerid1, 
-			jsonObject);
+						jsonObject.message_text,
+						evt.callerid2,
+						evt.callerid1, 
+						jsonObject);
 	}
 });
 
@@ -211,9 +207,9 @@ ami.on('hangup', function(evt) {
 			Full list of codes can be found at: 
 			https://wiki.asterisk.org/wiki/display/AST/Hangup+Cause+Mappings */
 		editMessageText(evt.cause,
-			jsonObject.message_text, 
-			evt.calleridnum, evt.connectedlinenum, 
-			jsonObject);
+						jsonObject.message_text, 
+						evt.calleridnum, evt.connectedlinenum, 
+						jsonObject);
 		// Delete this pair from the map so it won't call editMessageText twice (hangup event occurs several times)
 		currentCalls.delete(key);
 	}
@@ -265,10 +261,10 @@ function createInlineKeyboard(isShow) {
 		return JSON.stringify({
         	inline_keyboard: [
 	          	[
-	            	{text:'201',callback_data:'201'},
-	            	{text:'202',callback_data:'202'},
-	            	{text:'301',callback_data:'301'},
-	            	{text:'302',callback_data:'302'}
+	                {text:'201',callback_data:'201'},
+	                {text:'202',callback_data:'202'},
+	                {text:'301',callback_data:'301'},
+	                {text:'302',callback_data:'302'}
 	          	],
 	          	[
 		            {text:'401',callback_data:'401'},
@@ -297,10 +293,7 @@ function findCustomerData(phoneNumber, db, callback) {
 	cursor.each(function(err, doc) {
 		assert.equal(err, null);
 		if (doc != null) {
-			data = doc;
-			callback(data);
-		} else {
-			callback();
+			callback(doc);
 		}
 	});	
 };
