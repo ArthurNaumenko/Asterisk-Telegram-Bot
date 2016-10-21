@@ -43,18 +43,6 @@ var ami = new require('asterisk-manager')(
 );
 ami.keepConnected();
 
-// MongoDB
-var MongoClient = new require('mongodb').MongoClient;
-var assert = require('assert');
-
-var url = 'mongodb://' + config.db_ip + ':' + config.db_port + '/' + config.db_name;
-MongoClient.connect(url, function(err, db) {
-  assert.equal(null, err);
-  console.log("Successful connection to data base");
-  db.close();
-});
-
-var chatid = config.testchatid;
 var currentCalls = new Map();
 
   //Receive get-request containing a phone number sent by Askozia.
@@ -66,7 +54,7 @@ app.get('/missed/:phone/:dura', function(req, res) {
   var phoneNumber = missedCall.replace('+','').replace('+','');
   var duration = req.params.dura;
 
- var replyText = 'Missed call from: ' +
+  var replyText = 'Missed call from: ' +
                   phoneNumber +
                   '. Waiting time: ' +
                   duration +
@@ -274,7 +262,7 @@ function createInlineKeyboard(isShow) {
       inline_keyboard: [
         [
           {text:'🔽   SHOW KEYBOARD   🔽',callback_data:'show'}
-				]
+        ]
       ]
     });
   } else {
