@@ -38,8 +38,8 @@ var ami = new require('asterisk-manager')(
   config.agi_port,
   config.agi_host,
   config.ami_login,
-	config.ami_pass,
-	true
+  config.ami_pass,
+  true
 );
 ami.keepConnected();
 
@@ -64,7 +64,7 @@ app.get('/missed/:phone/:dura', function(req, res) {
   var keyboard = {reply_markup: JSON.parse(createInlineKeyboard(false))};
 
   // Send a message with inline buttons to the chat
-  bot.sendMessage(chatid, replyText, keyboard);
+  bot.sendMessage(config.chatid, replyText, keyboard);
 
   res.status('result').send('Request proccessed successfully');
 });
