@@ -24,7 +24,7 @@ ________________________________________________________________________________
       hung up the phone, edit the message respectively.
 ______________________________________________________________________________________________________________ */
 
-var config = require('./config');
+var config = require('./config.js');
 // Express variables
 var express = require('express');
 var app = express();
@@ -42,6 +42,9 @@ var ami = new require('asterisk-manager')(
   true
 );
 ami.keepConnected();
+
+var utilities = require("./utilities/utilities.js");
+var kbCreator = require("./utilities/keyboard.js");
 
 var currentCalls = new Map();
 
@@ -61,7 +64,7 @@ app.get('/missed/:phone/:dura', function(req, res) {
                   ' seconds.';
 
   // Build a custom inline keyboard with internal telephone extentions
-  var keyboard = {reply_markup: JSON.parse(createInlineKeyboard(false))};
+  var keyboard = {reply_markup: JSON.parse(kbCreator.createInlineKeyboard(false))};
 
   // Send a message with inline buttons to the chat
   bot.sendMessage(config.chatid, replyText, keyboard);
@@ -82,7 +85,7 @@ bot.on('callback_query', function (msg) {
   var operatorNum = msg.data;
 
   if (msg.data === 'show') {
-    var keyboard = createInlineKeyboard(false);
+    var keyboard = kbCreator.createInlineKeyboard(false);
     var idKBoard = {message_id: msg.message.message_id,
                     chat_id: msg.message.chat.id,
                     reply_markup: JSON.parse(keyboard),
@@ -99,7 +102,7 @@ bot.on('callback_query', function (msg) {
                  '...';
 
     // Build a custom inline keyboard with internal telephone extentions
-    var keyboard = createInlineKeyboard(false);
+    var keyboard = kbCreator.createInlineKeyboard(false);
 
 		//  After a handful of attempts to make the inline keyboard stay
     // after changing the message text inserting json
@@ -117,7 +120,7 @@ bot.on('callback_query', function (msg) {
 
     // Change the message text and hide keyboard
     // for the calling time to avoid collisons
-    midMsg = trimMessage(midMsg);
+    midMsg = utilities.trimMessage(midMsg);
     bot.editMessageText(midMsg, ids);
 
     // Call Asterisk manager method that will initiate dialing
@@ -182,9 +185,9 @@ ami.on('hangup', function(evt) {
   if (currentCalls.get(key) !== undefined) {
     // Append keyboard back
     if (evt.cause === '16') {
-      var keyboard = createInlineKeyboard(true);
+      var keyboard = kbCreator.createInlineKeyboard(true);
     } else {
-      var keyboard = createInlineKeyboard(false);
+      var keyboard = kbCreator.createInlineKeyboard(false);
     }
 
     jsonObject.reply_markup = JSON.parse(keyboard);
@@ -204,7 +207,7 @@ ami.on('hangup', function(evt) {
 
 // Callback function that changes message upon call result
 function editMessageText(cause, message, num, exten, array) {
-  message = trimMessage(message);
+  message = utilities.trimMessage(message);
   // Change the message text to assure the operator
   // that ths number has been called
   var result = '';
@@ -253,46 +256,4 @@ function editMessageText(cause, message, num, exten, array) {
       break;
   }
   bot.editMessageText(result, array);
-}
-
-// Create an inline keyboard with operator and customer numbers as callback data
-function createInlineKeyboard(isShow) {
-  if (isShow) {
-    return JSON.stringify({
-      inline_keyboard: [
-        [
-          {text:'🔽   SHOW KEYBOARD   🔽',callback_data:'show'}
-        ]
-      ]
-    });
-  } else {
-    return JSON.stringify({
-      inline_keyboard: [
-        [
-          {text:'201',callback_data:'201'},
-          {text:'202',callback_data:'202'},
-          {text:'301',callback_data:'301'},
-          {text:'302',callback_data:'302'}
-        ],
-        [
-          {text:'401',callback_data:'401'},
-          {text:'402',callback_data:'402'},
-          {text:'501',callback_data:'501'},
-          {text:'502',callback_data:'502'}
-        ]
-      ]
-    });
-  }
-}
-
-// Check number of lines in the message and clean
-// if they are too many to keep the chat clean
-function trimMessage(message) {
-  var lines = message.split('\n');
-  if (lines.length >= 10) {
-    lines.splice(1,2);
-    return lines.join('\n');
-  } else {
-    return message;
-  }
 }
